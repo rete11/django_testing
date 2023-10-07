@@ -3,6 +3,7 @@ from typing import List, Tuple
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 from notes.models import Note
 
@@ -18,7 +19,7 @@ class TestNoteList(TestCase):
     """
 
     # Константа адреса списка заметок
-    List_URL = reverse("notes:list")
+    LIST_URL = reverse("notes:list")
 
     @classmethod
     def setUpTestData(cls) -> None:
@@ -35,7 +36,7 @@ class TestNoteList(TestCase):
         Проверка на наличие заметок автора в ответе на запрос.
         """
         self.client.force_login(self.author)
-        response = self.client.get(self.List_URL)
+        response = self.client.get(self.LIST_URL)
         object_list = response.context["object_list"]
         self.assertIn(self.notes, object_list)
 
@@ -47,59 +48,54 @@ class TestOtherUsersNotes(TestCase):
     """
 
     # Константа адреса списка заметок
-    List_URL = reverse("notes:list")
+    LIST_URL = reverse("notes:list")
 
     @classmethod
     def setUpTestData(cls) -> None:
         """
         Создание тестовых данных, нужных для всех тестов этого класса.
         """
-        cls.user_one: User = User.objects.create(username="Смотрящий")
-        cls.user_two: User = User.objects.create(username="Скрывающий")
-
-        # Константы для генерации списка заметок
-        NUM_NOTE1: int = 5
-        NUM_NOTE2: int = 10
-
-        notes1: List[Note] = [
+        cls.author: User = User.objects.create(username="Автор")
+        cls.reader: User = User.objects.create(username="Читатель")
+        notes_author: List[Note] = [
             Note(
                 title=f"Заголовок {index}",
                 text="Текст{index}",
-                author=cls.user_one,
+                author=cls.author,
                 slug=index,
             )
-            for index in range(NUM_NOTE1)
+            for index in range(settings.NUM_NOTE1)
         ]
-        Note.objects.bulk_create(notes1)
-        notes2: List[Note] = [
+        Note.objects.bulk_create(notes_author)
+        notes_reader: List[Note] = [
             Note(
                 title=f"Заголовок {index}",
                 text="Текст{index}",
-                author=cls.user_two,
+                author=cls.reader,
                 slug=index,
             )
-            for index in range(NUM_NOTE1, NUM_NOTE2)
+            for index in range(settings.NUM_NOTE1, settings.NUM_NOTE2)
         ]
-        Note.objects.bulk_create(notes2)
+        Note.objects.bulk_create(notes_reader)
 
     def test_user_notes_list(self) -> None:
         """
         Проверка на вхождение записей в списки пользователей.
         """
-        self.client.force_login(self.user_one)
-        response = self.client.get(self.List_URL)
-        user_one_notes = Note.objects.filter(author=self.user_one)
-        user_two_notes = Note.objects.filter(author=self.user_two)
-        for note in user_one_notes:
+        self.client.force_login(self.author)
+        response = self.client.get(self.LIST_URL)
+        author_notes = Note.objects.filter(author=self.author)
+        reader_notes = Note.objects.filter(author=self.reader)
+        for note in author_notes:
             self.assertContains(response, note.title)
-        for note in user_two_notes:
+        for note in reader_notes:
             self.assertNotContains(response, note.title)
         self.client.logout()
-        self.client.force_login(self.user_two)
-        response = self.client.get(self.List_URL)
-        for note in user_two_notes:
+        self.client.force_login(self.reader)
+        response = self.client.get(self.LIST_URL)
+        for note in reader_notes:
             self.assertContains(response, note.title)
-        for note in user_one_notes:
+        for note in author_notes:
             self.assertNotContains(response, note.title)
 
 
@@ -108,6 +104,7 @@ class TestFormNotes(TestCase):
     Класс для тестирования передачи форм
     на страницы создания и редактирования заметки.
     """
+
     @classmethod
     def setUpTestData(cls) -> None:
         """
@@ -123,8 +120,10 @@ class TestFormNotes(TestCase):
         Проверка на включение формы в контекст при переходе
         на страницу добавления или редактирования записи.
         """
-        urls: Tuple[str, int or None] = (("notes:edit", (self.notes.slug,)),
-                                         ("notes:add", None))
+        urls: Tuple[str, int or None] = (
+            ("notes:edit", (self.notes.slug,)),
+            ("notes:add", None),
+        )
         self.client.force_login(self.user)
         for name, args in urls:
             with self.subTest(user=self.user, name=name):

@@ -87,3 +87,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = reverse_lazy('users:login')
 LOGIN_REDIRECT_URL = reverse_lazy('notes:home')
+NUM_NOTE1 = 5
+NUM_NOTE2 = 10
+NOTE_TEXT = "Текст заметки"
+NOTE_TITLE = "Заголовок заметки"

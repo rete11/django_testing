@@ -112,10 +112,9 @@ def create_comments(news: object) -> Comment:
     Создаёт новые объекты Comment и записывает их в базу данных.
     Каждый комментарий имеет уникальный текст и дату и время создания.
     """
-    NUM_COM: int = 2  # количество комментариев
     author = User.objects.create(username="Комментатор")
     # Создаём комментарии в цикле.
-    for index in range(NUM_COM):
+    for index in range(settings.NUM_COM):
         # Создаём объект и записываем его в переменную.
         comment = Comment.objects.create(
             news=news,
