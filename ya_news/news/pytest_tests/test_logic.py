@@ -1,8 +1,9 @@
-import pytest
 from http import HTTPStatus
 
-from pytest_django.asserts import assertRedirects, assertFormError
+import pytest
 from django.urls import reverse
+from pytest_django.asserts import assertRedirects, assertFormError
+
 
 from news.forms import WARNING, BAD_WORDS
 from news.models import Comment
@@ -18,7 +19,7 @@ def test_anonymous_user_cant_create_comment(client, form_data, news):
     login_url = reverse("users:login")
     expected_url = f"{login_url}?next={url}"
     assertRedirects(response, expected_url)
-    assert Comment.objects.count() == 0
+    assert not Comment.objects.exists()
 
 
 def test_user_can_create_comment(author_client, form_data, news):
@@ -81,8 +82,8 @@ def test_other_user_cant_edit_comment(admin_client, form_data, comment):
 
 def test_author_can_delete_comment(author_client, slug_for_args):
     '''
-    Тест проверяет, что автор
-   может  удалять чужие комментарии.
+    Тест проверяет, что авторизованный пользователь
+    может  удалять свои комментарии.
     '''
     url = reverse('news:delete', args=slug_for_args)
     response = author_client.post(url)

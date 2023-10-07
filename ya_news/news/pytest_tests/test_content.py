@@ -1,6 +1,6 @@
-import pytest
 from typing import Any
 
+import pytest
 from django.urls import reverse
 from django.conf import settings
 
@@ -12,7 +12,7 @@ def test_news_list_show_max_10_news(client: Any, create_news: Any) -> None:
     """
     url: str = reverse("news:home")
     response = client.get(url)
-    news_list = response.context['object_list']
+    news_list = response.context["object_list"]
     assert len(news_list) <= settings.NEWS_COUNT_ON_HOME_PAGE
 
 
@@ -24,7 +24,7 @@ def test_news_list_order(client: Any, create_news: Any) -> None:
     """
     url: str = reverse("news:home")
     response = client.get(url)
-    news_list = response.context['object_list']
+    news_list = response.context["object_list"]
     all_dates = [news.date for news in news_list]
     sorted_dates = sorted(all_dates, reverse=True)
     assert all_dates == sorted_dates
@@ -32,32 +32,32 @@ def test_news_list_order(client: Any, create_news: Any) -> None:
 
 @pytest.mark.django_db
 def test_comments_order(client: Any, news: Any, create_comments: Any) -> None:
-    url: str = reverse('news:detail', args=(news.pk,))
+    url: str = reverse("news:detail", args=(news.pk,))
     response = client.get(url)
-    news = response.context['news']
+    news = response.context["news"]
     comments: list = list(
-        response.context['news'].comment_set.all().order_by('created')
+        response.context["news"].comment_set.all().order_by("created")
     )
     assert len(comments) >= 2
     assert comments[0].created < comments[1].created
 
 
+@pytest.mark.parametrize(
+    "parametrize_client, form_in_context",
+    (
+        (pytest.lazy_fixture("client"), False),
+        (pytest.lazy_fixture("admin_client"), True),
+    ),
+)
 @pytest.mark.django_db
-def test_anonymous_user_contains_form(client: Any, news: Any) -> None:
+def test_anonym_auth_user_contains_form(
+    parametrize_client: Any, form_in_context: bool, news: Any
+) -> None:
     """
     Тест проверяет, что анонимному пользователю недоступна форма
-    для отправки комментария на странице отдельной новости
+    для отправки комментария на странице отдельной новости, а авторизованному
+    пользователю - доступна.
     """
-    url: str = reverse("news:detail", args=(news.pk,))
-    response = client.get(url)
-    assert 'form' not in response.context
-
-
-def test_auth_user_contains_form(admin_client: Any, news: Any) -> None:
-    """
-    Тест проверяет, что авторизованному пользователю недоступна форма
-    для отправки комментария на странице отдельной новости
-    """
-    url: str = reverse("news:detail", args=(news.pk,))
-    response = admin_client.get(url)
-    assert 'form' in response.context
+    url = reverse("news:detail", args=(news.pk,))
+    response = parametrize_client.get(url)
+    assert ("form" in response.context) is form_in_context

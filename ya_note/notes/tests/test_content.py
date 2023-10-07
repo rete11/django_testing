@@ -54,8 +54,8 @@ class TestOtherUsersNotes(TestCase):
         """
         Создание тестовых данных, нужных для всех тестов этого класса.
         """
-        cls.user1: User = User.objects.create(username="user1")
-        cls.user2: User = User.objects.create(username="user2")
+        cls.user_one: User = User.objects.create(username="Смотрящий")
+        cls.user_two: User = User.objects.create(username="Скрывающий")
 
         # Константы для генерации списка заметок
         NUM_NOTE1: int = 5
@@ -65,7 +65,7 @@ class TestOtherUsersNotes(TestCase):
             Note(
                 title=f"Заголовок {index}",
                 text="Текст{index}",
-                author=cls.user1,
+                author=cls.user_one,
                 slug=index,
             )
             for index in range(NUM_NOTE1)
@@ -75,7 +75,7 @@ class TestOtherUsersNotes(TestCase):
             Note(
                 title=f"Заголовок {index}",
                 text="Текст{index}",
-                author=cls.user2,
+                author=cls.user_two,
                 slug=index,
             )
             for index in range(NUM_NOTE1, NUM_NOTE2)
@@ -86,20 +86,20 @@ class TestOtherUsersNotes(TestCase):
         """
         Проверка на вхождение записей в списки пользователей.
         """
-        self.client.force_login(self.user1)
+        self.client.force_login(self.user_one)
         response = self.client.get(self.List_URL)
-        user1_notes = Note.objects.filter(author=self.user1)
-        user2_notes = Note.objects.filter(author=self.user2)
-        for note in user1_notes:
+        user_one_notes = Note.objects.filter(author=self.user_one)
+        user_two_notes = Note.objects.filter(author=self.user_two)
+        for note in user_one_notes:
             self.assertContains(response, note.title)
-        for note in user2_notes:
+        for note in user_two_notes:
             self.assertNotContains(response, note.title)
         self.client.logout()
-        self.client.force_login(self.user2)
+        self.client.force_login(self.user_two)
         response = self.client.get(self.List_URL)
-        for note in user2_notes:
+        for note in user_two_notes:
             self.assertContains(response, note.title)
-        for note in user1_notes:
+        for note in user_one_notes:
             self.assertNotContains(response, note.title)
 
 

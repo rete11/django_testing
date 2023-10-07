@@ -1,11 +1,10 @@
-import pytest
+from datetime import datetime, timedelta
 from typing import Any
 
-from datetime import datetime, timedelta
-
+import pytest
 from django.conf import settings
-from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from news.models import News, Comment
 

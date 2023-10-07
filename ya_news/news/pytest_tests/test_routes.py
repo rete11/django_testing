@@ -1,6 +1,7 @@
-import pytest
+from typing import Any
 from http import HTTPStatus
 
+import pytest
 from pytest_django.asserts import assertRedirects
 from django.urls import reverse
 
@@ -17,9 +18,18 @@ from django.urls import reverse
     ),
 )
 @pytest.mark.django_db
-def test_pages_availability_for_anonymous_user(client, name, args):
-    url = reverse(name, args=args)  # Получаем ссылку на нужный адрес.
-    response = client.get(url)  # Выполняем запрос.
+def test_pages_availability_for_anonymous_user(
+    client: Any, name: str, args: Any
+) -> None:
+    """
+    Тест проверяет:
+    - главная страница доступна анонимному пользователю;
+    - страница отдельной новости доступна анонимному пользователю;
+    - страницы регистрации пользователей, входа в учётную запись и
+    выхода из неё доступны анонимным пользователям.
+    """
+    url = reverse(name, args=args)
+    response = client.get(url)
     assert response.status_code == HTTPStatus.OK
 
 
@@ -32,7 +42,14 @@ def test_pages_availability_for_anonymous_user(client, name, args):
     ),
 )
 @pytest.mark.django_db
-def test_coment_edit_delete_for_auth_users(admin_client, name, args):
+def test_coment_edit_delete_for_auth_users(
+    admin_client: Any, name: str, args: Any
+) -> None:
+    """
+    Тест проверяет, что авторизованный пользователь не может зайти
+    на страницы редактирования или удаления чужих комментариев
+    (возвращается ошибка 404).
+    """
     url = reverse(name, args=args)
     response = admin_client.get(url)
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -42,7 +59,13 @@ def test_coment_edit_delete_for_auth_users(admin_client, name, args):
     "name",
     ("news:edit", "news:delete"),
 )
-def test_coment_edit_delete_for__author(author_client, name, comment):
+def test_coment_edit_delete_for__author(
+    author_client: Any, name: str, comment: Any
+) -> None:
+    """
+    Тест проверяет, что страницы удаления и редактирования комментария доступны
+    автору комментария.
+    """
     url = reverse(name, args=(comment.id,))
     response = author_client.get(url)
     assert response.status_code == HTTPStatus.OK
@@ -56,7 +79,12 @@ def test_coment_edit_delete_for__author(author_client, name, comment):
     ),
 )
 @pytest.mark.django_db
-def test_redirects(client, name, args):
+def test_redirects(client: Any, name: str, args: Any) -> None:
+    """
+    Тест проверяет, что при попытке перейти на страницу
+    редактирования или удаления комментария анонимный
+    пользователь перенаправляется на страницу авторизации.
+    """
     login_url = reverse("users:login")
     url = reverse(name, args=args)
     expected_url = f"{login_url}?next={url}"
